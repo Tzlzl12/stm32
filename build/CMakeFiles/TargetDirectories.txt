@@ -1,0 +1,5 @@
+/home/tll/embeded/domino-stm/build/CMakeFiles/dominos.dir
+/home/tll/embeded/domino-stm/build/CMakeFiles/edit_cache.dir
+/home/tll/embeded/domino-stm/build/CMakeFiles/rebuild_cache.dir
+/home/tll/embeded/domino-stm/build/init/CMakeFiles/edit_cache.dir
+/home/tll/embeded/domino-stm/build/init/CMakeFiles/rebuild_cache.dir
