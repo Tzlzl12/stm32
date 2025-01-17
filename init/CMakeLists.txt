@@ -7,7 +7,7 @@ add_library(stm32 INTERFACE)
 enable_language(C ASM)
 
 # add_definitions(
-#   USE_STDPERIPH_DRIVER 
+#   USE_STDPERIPH_DRIVER
 # 	STM32F411xE
 #     $<$<CONFIG:Debug>:DEBUG>
 # )
@@ -16,7 +16,7 @@ target_include_directories(stm32 INTERFACE
   ${CMAKE_SOURCE_DIR}/sys
   ${CMAKE_SOURCE_DIR}/core
   ${CMAKE_SOURCE_DIR}/dev/inc
-  ${CMAKE_SOURCE_DIR}/src/inc    
+  ${CMAKE_SOURCE_DIR}/src/inc
 )
 
 target_sources(stm32 INTERFACE
@@ -62,9 +62,10 @@ target_sources(stm32 INTERFACE
   ${CMAKE_SOURCE_DIR}/dev/src/stm32f4xx_usart.c
   ${CMAKE_SOURCE_DIR}/dev/src/stm32f4xx_wwdg.c
   ${CMAKE_SOURCE_DIR}/src/stm32f4xx_it.c
-  ${CMAKE_SOURCE_DIR}/sys/delay.c 
-  ${CMAKE_SOURCE_DIR}/sys/system_stm32f4xx.c 
-  ${CMAKE_SOURCE_DIR}/startup_stm32f411xe.s
+  ${CMAKE_SOURCE_DIR}/sys/delay.c
+  ${CMAKE_SOURCE_DIR}/sys/system_stm32f4xx.c
+  # ${CMAKE_SOURCE_DIR}/startup_stm32f411xe.s
+  ${CMAKE_SOURCE_DIR}/startup_stm32f401xc.s
 )
 
 target_link_directories(stm32 INTERFACE
@@ -80,7 +81,7 @@ target_compile_options(stm32 INTERFACE
 
 # Validate that STM32CubeMX code is compatible with C standard
 if(CMAKE_C_STANDARD LESS 11)
-    message(ERROR "Generated code requires C11 or higher")
+  message(ERROR "Generated code requires C11 or higher")
 endif()
 
 

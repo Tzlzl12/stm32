@@ -4,20 +4,25 @@
 
 uint32_t TimDelaying = 0;
 
-void __delay_us(uint32_t us)
+void delay_ms(void)
 {
-  TimDelaying = us;
-  while (SysTick_Config(85));
-  SysTick->CTRL |= 1;
+  // 设置 SysTick 重载值，每次溢出1ms（假设系统时钟为 72 MHz）
+  SysTick->LOAD = SystemCoreClock / 1000 - 1;                            // 系统时钟频率除以1000，产生1ms定时
+  SysTick->VAL  = 0;                                                     // 清零计数器
+  SysTick->CTRL = SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_CLKSOURCE_Msk;  // 启动SysTick计时器
 
-  while (TimDelaying);
-  SysTick->CTRL &= ~1;
+  // 等待直到计数器溢出
+  while ((SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk) == 0) {
+    // 当计数器还没溢出时，保持循环等待
+  }
+
+  SysTick->CTRL = 0;  // 停止 SysTick
 }
 
 void delay(uint32_t ms)
 {
   for (uint32_t i = 0; i < ms; i++)
-    __delay_us(1000);
+    delay_ms();
 }
 
 #ifdef USE_FULL_ASSERT

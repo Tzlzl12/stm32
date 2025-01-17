@@ -1,3 +1,6 @@
 /.cache
 /.ccls-cache
 /build
+/startup*
+/*.ld
+
