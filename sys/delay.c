@@ -3,7 +3,11 @@
 #include <stdint.h>
 
 uint32_t TimDelaying = 0;
-
+uint32_t delay_time  = 0;
+uint32_t Get_Time(void)
+{
+  return TimDelaying;
+}
 void delay_ms(void)
 {
   // 设置 SysTick 重载值，每次溢出1ms（假设系统时钟为 72 MHz）
@@ -21,8 +25,13 @@ void delay_ms(void)
 
 void delay(uint32_t ms)
 {
+#ifndef TIM_IT
   for (uint32_t i = 0; i < ms; i++)
     delay_ms();
+#else
+  uint32_t excepted_time = delay_time + ms;
+  while (delay_time <= excepted_time);
+#endif
 }
 
 #ifdef USE_FULL_ASSERT

@@ -129,11 +129,28 @@ void PendSV_Handler(void)
  * @retval None
  */
 extern uint32_t TimDelaying;
-void SysTick_Handler(void)
+void            SysTick_Handler(void)
 {
   TimDelaying++;
 }
 
+extern volatile unsigned char led_flag;
+extern uint32_t               delay_time;
+#include <tim_it.h>
+void TIM3_IRQHandler(void)
+{
+  if (TIM_GetFlagStatus(TIM3, TIM_FLAG_Update) == SET) {
+    TIM_ClearFlag(TIM3, TIM_FLAG_Update);
+    delay_time++;
+  }
+}
+void EXTI9_5_IRQHandler(void)
+{
+  if (EXTI_GetFlagStatus(EXTI_Line6) == SET) {
+    led_flag = ~led_flag;
+  }
+  EXTI_ClearFlag(EXTI_Line6);
+}
 /******************************************************************************/
 /*                 STM32F4xx Peripherals Interrupt Handlers                   */
 /*  Add here the Interrupt Handler for the used peripheral(s) (PPP), for the  */

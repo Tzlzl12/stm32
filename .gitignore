@@ -4,3 +4,5 @@
 /startup*
 /*.ld
 
+/compile_commands.json
+

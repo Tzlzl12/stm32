@@ -32,4 +32,5 @@
 
 void delay(uint32_t ms);
 
+uint32_t Get_Time(void);
 #endif /* __MAIN_H */

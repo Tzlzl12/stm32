@@ -61,7 +61,6 @@ target_sources(stm32 INTERFACE
   ${CMAKE_SOURCE_DIR}/dev/src/stm32f4xx_tim.c
   ${CMAKE_SOURCE_DIR}/dev/src/stm32f4xx_usart.c
   ${CMAKE_SOURCE_DIR}/dev/src/stm32f4xx_wwdg.c
-  ${CMAKE_SOURCE_DIR}/src/stm32f4xx_it.c
   ${CMAKE_SOURCE_DIR}/sys/delay.c
   ${CMAKE_SOURCE_DIR}/sys/system_stm32f4xx.c
   # ${CMAKE_SOURCE_DIR}/startup_stm32f411xe.s
