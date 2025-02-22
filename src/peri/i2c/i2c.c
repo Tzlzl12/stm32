@@ -17,7 +17,6 @@ static void    i2c_gpio_config(void)
   };
 
   GPIO_Init(GPIOB, &gpio_cfg);
-  GPIO_Init(GPIOB, &gpio_cfg);
 
   GPIO_PinAFConfig(GPIOB, GPIO_PinSource6, GPIO_AF_I2C1);
   GPIO_PinAFConfig(GPIOB, GPIO_PinSource7, GPIO_AF_I2C1);

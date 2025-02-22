@@ -16,9 +16,9 @@ set(CMAKE_C_EXTENSIONS ON)
 # Define the build type
 # set(CMAKE_BUILD_TYPE "Release")
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Debug")
-endif()
+# if(NOT CMAKE_BUILD_TYPE)
+set(CMAKE_BUILD_TYPE "Debug")
+# endif()
 
 # Set the project name
 set(CMAKE_PROJECT_NAME dominos)
@@ -80,6 +80,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined symbols
   USE_STDPERIPH_DRIVER
   STM32F411xE
+  $<$<CONFIG:Debug>:DEBUG>
 )
 
 # Add linked libraries

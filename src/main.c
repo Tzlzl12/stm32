@@ -30,10 +30,10 @@ int main(void)
 #endif
   // uint16_t cnt = 0;
   oled_init();
-  oled_test();
+  // oled_test();
   Key_ExtiConfig();
-  // oled_clear();
-  // oled_updata();
+  oled_clear();
+  oled_update();
   while (1) {
     // oled_showc(0, 0, 'A');
     // LED_SET_LOW(GPIOC, GPIO_Pin_7);

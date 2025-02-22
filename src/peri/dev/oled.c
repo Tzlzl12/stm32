@@ -1,7 +1,7 @@
 
 #include <oled.h>
-#ifndef OLED_USE_BUFFER
 #include <delay.h>
+#ifndef OLED_USE_BUFFER
 #include <string.h>
 
 extern const uint8_t font6x8[][6];
@@ -152,16 +152,59 @@ void oled_clear(void)
   }
 }
 #endif
+
+#ifdef DEBUG
 void oled_test(void)
 {
+  uint8_t pig[] = {
+      0x00,
+      0x00,
+      0x00,
+      0xf0,
+      0xe8,
+      0xdc,
+      0x2c,
+      0x0c,
+      0x0c,
+      0x04,
+      0x30,
+      0x30,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x05,
+      0x2b,
+      0x7c,
+      0x68,
+      0x40,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+  };
   // oled_shows(0, 0, "hello");
   oled_clear();
-  oled_showChar(0, 1, 'A');
-  // oled_showChar(1, 0, 'H');
-  oled_showString(3, 0, "hello");
-  oled_showNumber(4, 0, 23, 4);
-  oled_updata();
+  oled_update();
+  // delay(1500);
+  // oled_showChar(0, 9, 'A');
+  // oled_showChar(0, 9, 'B');
+  // oled_showChar(0, 15, 'H');
+  // oled_showString(1, 0, "hello");
+  // oled_showNumber(2, 7, 23, 4);
+  // oled_showChar(0, 15, 'A');
+  // oled_showImage(0, 15, 16, 16, pig);
+
+  oled_update();
   // uint32_t num = 23;
 
   // oled_shown(0, 0, num, 4);
 }
+#endif

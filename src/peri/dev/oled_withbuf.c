@@ -3,13 +3,11 @@
 #include <delay.h>
 
 extern uint8_t font6x8[][6];
+static uint8_t oled_changed;
 static uint8_t oled_buf[oled_page][oled_line];
 
-// #define oled_sendcmd(cmd)                                  \
-//   do {                                                     \
-//     uint8_t init_cmd[] = {0x00, cmd};                      \
-//     i2c_send(I2C1, OLED_ADDR, init_cmd, sizeof(init_cmd)); \
-//   } while (0)
+static void oled_clearRegion(uint8_t page, uint8_t from, uint8_t to);
+
 #define oled_sendcmd(cmd)                \
   const uint8_t cmd_command = 0x00;      \
   do {                                   \
@@ -18,20 +16,19 @@ static uint8_t oled_buf[oled_page][oled_line];
     i2c_sendata(I2C1, cmd, sizeof(cmd)); \
     i2c_stop(I2C1);                      \
   } while (0)
-// #define oled_sendata(data)                           \
-//   do {                                               \
-//     uint8_t digit[] = {0x40, data};                  \
-//     i2c_send(I2C1, OLED_ADDR, digit, sizeof(digit)); \
-//   } while (0)
-#define oled_sendata()                           \
-  uint8_t sendata_cmd = 0x40;                    \
-  do {                                           \
-    for (uint8_t i = 0; i < oled_page; i++) {    \
-      oled_setCursor(i, 0);                      \
-      i2c_sendAddress(I2C1, OLED_ADDR);          \
-      i2c_sendata(I2C1, &sendata_cmd, 1);        \
-      i2c_sendata(I2C1, oled_buf[i], oled_line); \
-    }                                            \
+
+#define oled_sendata()                             \
+  uint8_t sendata_cmd = 0x40;                      \
+  do {                                             \
+    for (uint8_t i = 0; i < oled_page; i++) {      \
+      if ((oled_changed & (1 << i))) {             \
+        oled_setCursor(i, 0);                      \
+        i2c_sendAddress(I2C1, OLED_ADDR);          \
+        i2c_sendata(I2C1, &sendata_cmd, 1);        \
+        i2c_sendata(I2C1, oled_buf[i], oled_line); \
+        i2c_stop(I2C1);                            \
+      }                                            \
+    }                                              \
   } while (0)
 
 void oled_init(void)
@@ -77,25 +74,52 @@ void oled_init(void)
   delay(100);
 }
 
+void oled_setPixel(uint8_t x, uint8_t y, uint8_t data, uint8_t clear)
+{
+  uint8_t page = y >> 3;
+
+  if (y % 8 == 0) {
+    oled_changed |= 1 << page;
+    oled_buf[page][x] = clear ? data : oled_buf[page][x] | data;
+  } else {
+    oled_changed |= 0x11 << page;
+    if (clear) {
+      oled_buf[page][x] &= ~(0xff << (y % 8));
+      oled_buf[page + 1][x] &= 0xff << (y % 8);
+    }
+    oled_buf[page][x] |= data << (y % 8);
+    oled_buf[page + 1][x] |= data >> (8 - (y % 8));
+    // oled_buf[page][x]     = clear ? data << (y % 8) : oled_buf[page][x] | data << (y % 8);
+    // oled_buf[page + 1][x] = clear ? data >> (8 - (y % 8)) : oled_buf[page][x] | data >> (8 - (y % 8));
+  }
+}
 static void oled_setCursor(uint8_t page, uint8_t x)
 {
   const uint8_t cmd[] = {x & 0x0f, ((x >> 4) & 0x0f), (0xb0 | (page & 0x07))};
   oled_sendcmd(cmd);
-  // const uint8_t low  = x & 0x0f;
-  // const uint8_t high = (x >> 4) & 0x0f;
-  // oled_sendcmd(0x00 | low);
-  // oled_sendcmd(0x10 | high);
-
-  // oled_sendcmd(0xb0 | (page & 0x07));
 }
 #if false
-static void oled_clearRegion(uint8_t page, uint8_t from, uint8_t to)
-{
-  // oled_setCursor(page, from);
-  for (uint8_t i = 0; i < to - from + 1; i++) {
-    oled_buf[page][i + from] = 0;
-  }
-}
+#define oled_sendcmd_v2(cmd, continue)   \
+  const uint8_t cmd_command = 0x00;      \
+  do {                                   \
+    i2c_sendAddress(I2C1, OLED_ADDR);    \
+    i2c_sendata(I2C1, &cmd_command, 1);  \
+    i2c_sendata(I2C1, cmd, sizeof(cmd)); \
+    if (!continue)                       \
+      i2c_stop(I2C1);                    \
+  } while (0)
+
+#define oled_sendata_v2()                          \
+  uint8_t sendata_cmd = 0x40;                      \
+  do {                                             \
+    for (uint8_t i = 0; i < oled_page; i++) {      \
+      if ((oled_changed & (1 << i))) {             \
+        oled_setCursor(i, 0);                      \
+        i2c_sendata(I2C1, &sendata_cmd, 1);        \
+        i2c_sendata(I2C1, oled_buf[i], oled_line); \
+      }                                            \
+    }                                              \
+  } while (0)
 
 #endif
 
@@ -104,23 +128,22 @@ static void oled_clearRegion(uint8_t page, uint8_t from, uint8_t to)
  * @param x    range 0-15
  * @param page range 0-7
  * */
-void oled_showChar(uint8_t page, uint8_t x, uint8_t c)
+void oled_showChar(uint8_t x, uint8_t y, uint8_t c)
 {
 #define offset 32
-
-  // oled_setCursor(page, x * 6);
-
+  // oled_changed |= (1 << page);
   for (uint8_t i = 0; i < 6; i++) {
+    oled_setPixel((x * 6) + i, y, font6x8[c - offset][i], 1);
     // oled_sendata(font6x8[c - offset][i]);
-    oled_buf[page][(x * 6) + i] = font6x8[c - offset][i];
+    // oled_buf[page][(x * 6) + i] = font6x8[c - offset][i];
   }
 }
 
-void oled_showString(uint8_t page, uint8_t x, const uint8_t* s)
+void oled_showString(uint8_t x, uint8_t y, const uint8_t* s)
 {
   // oled_clearRegion(page, x, x + strlen((char*)s));
   while (*s != '\0') {
-    oled_showChar(page, x++, *s);
+    oled_showChar(x++, y, *s);
     s++;
   }
 }
@@ -134,30 +157,56 @@ static uint32_t oled_pow(uint8_t x)
   return ret;
 }
 
-void oled_showNumber(uint8_t page, uint8_t x, uint32_t number, uint8_t length)
+void oled_showNumber(uint8_t x, uint8_t y, uint32_t number, uint8_t length)
 {
   // oled_clearRegion(page, x, x + length);
   for (uint8_t i = 0; i < length; i++) {
     uint8_t unit = number / oled_pow(length - 1 - i) % 10;
-    oled_showChar(page, x + i, unit + '0');
+    oled_showChar(x + i, y, unit + '0');
   }
 }
-void oled_showImage(uint8_t page, uint8_t x, uint8_t width, uint8_t height, const uint8_t* ptr)
+void oled_showImage(uint8_t x, uint8_t y, uint8_t width, uint8_t height, const uint8_t* ptr)
 {
-  uint8_t h            = height >> 3;
-  uint8_t image_offset = 0;
+  /* page x show image function
+    uint8_t h = height >> 3;
+    for (uint8_t i = 0; i < h; i++) {
+      oled_changed |= (1 << i);
+    }
+    uint8_t image_offset = 0;
+    for (uint8_t j = 0; j < h; j++) {
+      // oled_setCursor(page + j, x);
+      for (uint8_t i = 0; i < width; i++) {
+        image_offset = j * width + i;
+        // oled_sendata(ptr[image_offset]);
+        oled_buf[j + page][x + i] = ptr[image_offset];
+      }
+    } */
+
+  uint8_t h = ((height - 1) / 8) + 1;
   for (uint8_t j = 0; j < h; j++) {
-    // oled_setCursor(page + j, x);
     for (uint8_t i = 0; i < width; i++) {
-      image_offset = j * width + i;
-      // oled_sendata(ptr[image_offset]);
-      oled_buf[j + page][x + i] = ptr[image_offset];
+      oled_setPixel(x + i, y + (8 * j), ptr[(width * j) + i], 1);
     }
   }
 }
 
+static void oled_drawPoint(uint8_t x, uint8_t y)
+{
+  uint8_t page = y >> 3;
+  oled_changed |= 1 << page;
+  oled_buf[page][x] |= 1 << (y % 8);
+}
+
+static void oled_clearRegion(uint8_t page, uint8_t from, uint8_t to)
+{
+  // oled_setCursor(page, from);
+  for (uint8_t i = 0; i < to - from + 1; i++) {
+    oled_buf[page][i + from] = 0;
+  }
+}
 void oled_clear(void)
 {
+  oled_changed = 0xff;
   for (uint8_t j = 0; j < oled_page; j++) {
     // oled_setCursor(j, 0);
     for (uint8_t i = 0; i < oled_line; i++) {
@@ -166,16 +215,10 @@ void oled_clear(void)
   }
 }
 
-void oled_updata(void)
+// #define oled_update() oled_sendata()
+void oled_update(void)
 {
   oled_sendata();
-  // uint8_t sendata_cmd = 0x40;  //   do {
-  // for (uint8_t i = 0; i < oled_page; i++) {
-  //   oled_setCursor(i, 0);
-  //   i2c_sendAddress(I2C1, OLED_ADDR);
-  //   i2c_sendata(I2C1, &sendata_cmd, 1);
-  //   i2c_sendata(I2C1, oled_buf[i], oled_line);
-  // }
 }
 
 #endif
